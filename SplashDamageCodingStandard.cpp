@@ -412,8 +412,12 @@ namespace SDDynamicMemory
 {
 	// [cpp.dynamicmemory.reference] don't hold or pass references to dynamic memory
 	// you can't be sure the memory isn't reallocated and your reference will be invalid.
-	static void InnocentCall(UWorld& World,
-		TMap<const AActor*, FSDCodingStandardBlueprintVarGroup>& ActorMap)
+	static void InnocentCall
+	(
+		UWorld& World,
+		TMap<const AActor*, 
+		FSDCodingStandardBlueprintVarGroup>& ActorMap
+	)
 	{
 		// Add to Actor Map. Potentially causing it to reallocate.
 		const AActor* const NewActor = 
@@ -431,5 +435,117 @@ namespace SDDynamicMemory
 		// What memory are you writing to here? If the map got reallocated in InnocentCall
 		// then you are changing data not contained in the map.
 		DangerousReference.ShowCameraWidget = false;
+	}
+}
+
+namespace SDFuncLayout
+{
+	// [func.decl.layout] sometimes too many arguments, and/or long function calls cannot be avoided,
+	// especially when using engine methods or third party plugins.
+	// Keep the function calls in accordance to the [basic.layout] rule by utilizing vertical space
+	// and declaring one parameter per line (use in both .h and .cpp):
+	
+	//BAD - breaks [basic.layout]
+	static AActor* BadExampleFuncWithManyArguments(TSubclassOf<AActor> ActorClass, FVector SpawnPoint, const TArray<TSubclassOf<AActor>>& SomeActorClasses)
+	{
+		//Do stuff
+		return nullptr;
+	}
+
+	//GOOD - use one line per parameter
+	static AActor* GoodExampleFuncWithManyArguments
+	(
+		TSubclassOf<AActor> ActorClass,
+		FVector SpawnPoint, 
+		float InitialHealth,
+		int32 InitialAmmoCount,
+		const TArray<TSubclassOf<AActor>>& SomeActorClasses
+	)
+	{
+		//Do stuff
+		return nullptr;
+	}
+	//[func.call.layout] Make function calls easier to read and identify by aligning the parameters
+	//after the opening parenthesis '('.
+	//In Visual Studio, go to:
+	// Options -> Text Editor -> C/C++ -> Code Style -> Formatting -> Indentation.
+	//Scroll down and search for:
+	//	"Within parentheses, align new lines when I type them",
+	//Then select:
+	//	"Align contents to opening parenthesis".
+	static void BadFunctionCallLayoutExample()
+	{
+		const TSubclassOf<AActor> ActorClassToSpawn = ASDCodingStandardExampleActor::StaticClass();
+		const FVector ActorSpawnLocation(0.0f, 0.0f, 0.0f);
+		constexpr float ActorInitialHealth = 100.0f;
+		constexpr int32 ActorInitialAmmoCount = 1000;
+		
+		//BAD - breaks [basic.layout]
+		const TArray<TSubclassOf<AActor>> ActorClassesToIgnore = { AActor::StaticClass(), ASDCodingStandardExampleActor::StaticClass(), ACharacter::StaticClass() };
+
+		//BETTER - still not preferred but it might be acceptable in some cases 
+		//despite breaking [basic.layout]
+		const TArray<TSubclassOf<AActor>> AltActorClassesToIgnore =
+		{ AActor::StaticClass(), ASDCodingStandardExampleActor::StaticClass(), ACharacter::StaticClass() };
+
+		//BAD - breaks [basic.layout]
+		const AActor* const ActorA = GoodExampleFuncWithManyArguments(ActorClassToSpawn, ActorSpawnLocation, ActorInitialHealth, ActorInitialAmmoCount, ActorClassesToIgnore);
+		
+		//BAD - breaks [basic.layout]
+		const AActor* const ActorB = GoodExampleFuncWithManyArguments(ActorClassToSpawn, ActorSpawnLocation, ActorInitialHealth, ActorInitialAmmoCount, {AActor::StaticClass(), ASDCodingStandardExampleActor::StaticClass()});
+
+		//STILL BAD - makes parameters difficult to identify
+		const AActor* const ActorC = GoodExampleFuncWithManyArguments(
+			ActorClassToSpawn, ActorSpawnLocation,
+			ActorInitialHealth, ActorInitialAmmoCount, ActorClassesToIgnore);
+
+		//STILL BAD - makes parameters difficult to identify
+		const AActor* const ActorD = GoodExampleFuncWithManyArguments(
+			ActorClassToSpawn, ActorSpawnLocation, ActorInitialHealth, ActorInitialAmmoCount,
+			{ AActor::StaticClass(), ASDCodingStandardExampleActor::StaticClass() });
+	}
+
+	static void GoodFunctionCallLayoutExample()
+	{
+		const TSubclassOf<AActor> ActorClassToSpawn = ASDCodingStandardExampleActor::StaticClass();
+		const FVector ActorSpawnLocation(0.0f, 0.0f, 0.0f);
+		constexpr float ActorInitialHealth = 100.0f;
+		constexpr int32 ActorInitialAmmoCount = 1000;
+
+		//GOOD - use one line per parameter for the initializer list. 
+		//Use the same technique when using ctors with many arguments.
+		const TArray<TSubclassOf<AActor>> ActorClassesToIgnore = 
+		{
+			AActor::StaticClass(), 
+			ASDCodingStandardExampleActor::StaticClass(), 
+			ACharacter::StaticClass() 
+		};
+
+		//GOOD
+		GoodExampleFuncWithManyArguments(ActorClassToSpawn,
+										 ActorSpawnLocation,
+										 ActorInitialHealth,
+										 ActorInitialAmmoCount,
+										 ActorClassesToIgnore);
+
+		//GOOD
+		const AActor* const ActorA = GoodExampleFuncWithManyArguments(ActorClassToSpawn,
+																	  ActorSpawnLocation,
+																	  ActorInitialHealth,
+																	  ActorInitialAmmoCount,
+																	  ActorClassesToIgnore);
+
+		//OK - if you have/want to omit the array, use the same technique
+		//to declare the entries
+		const AActor* const ActorB =
+			GoodExampleFuncWithManyArguments(ActorClassToSpawn,
+											 ActorSpawnLocation,
+											 ActorInitialHealth,
+											 ActorInitialAmmoCount,
+											 {
+												 AActor::StaticClass(),
+												 ASDCodingStandardExampleActor::StaticClass(),
+												 ACharacter::StaticClass()
+											 });
 	}
 }
